@@ -1,66 +1,12 @@
 name: Daily Auto Update - 8AM KST
 
+# Retained as a manual entry point. auto-update.yml owns the daily schedule.
 on:
-  schedule:
-    - cron: '0 23 * * *'  # 매일 오후 11시 UTC (오전 8시 한국시간)
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install beautifulsoup4 requests
-      
-      - name: Update content with latest data
-        run: |
-          python3 << 'EOF'
-          from bs4 import BeautifulSoup
-          from datetime import datetime, timedelta
-          import os
-          
-          # 오늘 날짜
-          today = datetime.now().strftime('%Y-%m-%d')
-          
-          # HTML 파일 읽기
-          with open('index.html', 'r', encoding='utf-8') as f:
-              html_content = f.read()
-          
-          soup = BeautifulSoup(html_content, 'html.parser')
-          
-          # 업데이트 배지 날짜 변경
-          update_badge = soup.find('span', class_='update-badge')
-          if update_badge:
-              update_badge.string = f'✓ {today} 업데이트 (신뢰도 100%)'
-          
-          # 업데이트된 HTML 저장
-          with open('index.html', 'w', encoding='utf-8') as f:
-              f.write(str(soup.prettify()))
-          
-          print(f"✅ 자동 업데이트 완료: {today}")
-          EOF
-      
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add index.html
-          git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M:%S') - Daily content refresh" || true
-          git push
-      
-      - name: Verify deployment
-        run: |
-          echo "✅ Daily auto-update completed successfully!"
-          echo "📅 Updated at: $(date '+%Y-%m-%d %H:%M:%S')"
-          echo "🌐 Website: https://jennifersujinseo.github.io/AI_TRADE_REPORT/"
+    uses: ./.github/workflows/auto-update.yml
